@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:neumorphism/widgets/responseBar.dart';
 
 import '../key.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -17,6 +18,7 @@ import 'package:neumorphism/widgets/beats.dart';
 import 'package:provider/provider.dart';
 import 'HomePage.dart';
 import 'api/auth.dart';
+import 'api/like.dart';
 import 'widgets/neu_button.dart';
 import 'constants.dart';
 import 'widgets/neu_button.dart';
@@ -35,7 +37,7 @@ class MyApp extends StatelessWidget {
         create: (ctx) => Auth(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: LoginPage(),
+        home: HomePage(),
         theme: ThemeData(
           textTheme: GoogleFonts.poppinsTextTheme(
             Theme.of(context).textTheme,
@@ -55,11 +57,13 @@ class PlayerPage extends StatefulWidget {
   final String trackname;
   final int song_id;
   final List queue;
+  final List favorites;
 
   PlayerPage({
     required this.trackname,
     required this.song_id,
     required this.queue,
+    required this.favorites,
   });
 
   @override
@@ -90,11 +94,9 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     currentTrack = widget.trackname;
-    currentIndexPlaying = widget.song_id - 1;
+    currentIndexPlaying = widget.song_id - 2;
     print(currentIndexPlaying);
-
     setAudio();
-
     preparePlayer();
 
     _controller = AnimationController(duration: const Duration(milliseconds: 700), vsync: this);
@@ -135,19 +137,30 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
       currentTrack = widget.queue[currentIndexPlaying].name;
       var url = await player.load(widget.queue[currentIndexPlaying].name);
       await audioPlayer.setUrl(url.path, isLocal: true);
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        setState(() {
-        });
-      });
+      await getLikedStatus();
+      setState(() {});
+
       //setState(() {});
       print("NEXT AUDIO! $currentIndexPlaying");
+      audioPlayer.resume();
     } else {
+      currentIndexPlaying = 0;
+      position = Duration.zero;
+      duration = Duration.zero;
+      currentTrack = widget.queue[currentIndexPlaying].name;
+      var url = await player.load(widget.queue[currentIndexPlaying].name);
+      await audioPlayer.setUrl(url.path, isLocal: true);
+      await getLikedStatus();
+      setState(() {});
+
+      //setState(() {});
+      // print("NEXT AUDIO! $currentIndexPlaying");
       print("AUDIO COMPLETED PLAYING");
     }
   }
 
   setPreviousTrack() async {
-    if(currentIndexPlaying > 1){
+    if(currentIndexPlaying > 0){
       currentIndexPlaying = currentIndexPlaying - 1;
 
       position = Duration.zero;
@@ -155,14 +168,25 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
       currentTrack = widget.queue[currentIndexPlaying].name;
       var url = await player.load(widget.queue[currentIndexPlaying].name);
       await audioPlayer.setUrl(url.path, isLocal: true);
-      Future.delayed(const Duration(milliseconds: 1000), () {
-        setState(() {
-        });
-      });
+      await getLikedStatus();
+      setState(() {});
+
       //setState(() {});
       print("PREVIOUS AUDIO! $currentIndexPlaying");
+      audioPlayer.resume();
     } else {
       print("AUDIO COMPLETED PLAYING");
+    }
+  }
+
+  getLikedStatus() async {
+    isLiked = false;
+    for (var item in widget.favorites) {
+      if (item.name == widget.queue[currentIndexPlaying].name) {
+        setState(() {
+          isLiked = true;
+        });
+      }
     }
   }
 
@@ -194,6 +218,7 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
 
     var url = await player.load(widget.trackname);
     audioPlayer.setUrl(url.path, isLocal: true);
+    await getLikedStatus();
 
     /*
     Uint8List track = await _localFile;
@@ -268,8 +293,8 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                         width: buttonSize.width,
                         height: buttonSize.height,
                         child: Listener(
-                          onPointerUp: (_) => setState(() => isPressed = false),
-                          onPointerDown: (_) => setState(() => isPressed = true),
+                          onPointerUp: (_) => setState(() {}),
+                          onPointerDown: (_) => setState(() {}),
                           child:
                           AnimatedContainer(
                             duration: const Duration(milliseconds: animationTime),
@@ -277,8 +302,9 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                               alignment: Alignment(0, 0),
                               child: IconButton(
                                 color: neutralButtonColor,
-                                onPressed: () {
-                                  Navigator.pop(context);
+                                onPressed: () async {
+                                  await Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) =>
+                                      HomePage()), (Route<dynamic> route) => false);
                                 },
                                 icon: Icon(CupertinoIcons.arrow_left),
                               ),
@@ -290,8 +316,8 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                         width: buttonSize.width,
                         height: buttonSize.height,
                         child: Listener(
-                          onPointerUp: (_) => setState(() => isPressed = false),
-                          onPointerDown: (_) => setState(() => isPressed = true),
+                          onPointerUp: (_) => setState(() {}),
+                          onPointerDown: (_) => setState(() {}),
                           child:
                           AnimatedContainer(
                             duration: const Duration(milliseconds: animationTime),
@@ -566,8 +592,8 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                         width: buttonSize.width,
                         height: buttonSize.height,
                         child: Listener(
-                          onPointerUp: (_) => setState(() => isPressed = false),
-                          onPointerDown: (_) => setState(() => isPressed = true),
+                          onPointerUp: (_) => setState(() {}),
+                          onPointerDown: (_) => setState(() {}),
                           child:
                           AnimatedContainer(
                             duration: const Duration(milliseconds: animationTime),
@@ -588,8 +614,8 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                         width: buttonSize.width,
                         height: buttonSize.height,
                         child: Listener(
-                          onPointerUp: (_) => setState(() => isPressed = false),
-                          onPointerDown: (_) => setState(() => isPressed = true),
+                          onPointerUp: (_) => setState(() {}),
+                          onPointerDown: (_) => setState(() {}),
                           child:
                           AnimatedContainer(
                             duration: const Duration(milliseconds: animationTime),
@@ -615,8 +641,8 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                         width: buttonSize.width,
                         height: buttonSize.height,
                         child: Listener(
-                          onPointerUp: (_) => setState(() => isPressed = false),
-                          onPointerDown: (_) => setState(() => isPressed = true),
+                          onPointerUp: (_) => setState(() {}),
+                          onPointerDown: (_) => setState(() {}),
                           child:
                           AnimatedContainer(
                             duration: const Duration(milliseconds: animationTime),
@@ -655,8 +681,8 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                           width: buttonSize.width,
                           height: buttonSize.height,
                           child: Listener(
-                            onPointerUp: (_) => setState(() => isPressed = false),
-                            onPointerDown: (_) => setState(() => isPressed = true),
+                            onPointerUp: (_) => setState(() {}),
+                            onPointerDown: (_) => setState(() {}),
                             child:
                             AnimatedContainer(
                               duration: const Duration(milliseconds: animationTime),
@@ -696,10 +722,55 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                                 alignment: Alignment(0, 0),
                                 child: IconButton(
                                   color: isLiked ? mainButtonColor : neutralButtonColor,
-                                  onPressed: () {
-                                    setState(() {
-                                      isLiked = !isLiked;
-                                    });
+                                  onPressed: () async {
+                                    if (isLiked == true) {
+                                      var response = await Like().unlikeSong(widget.queue[currentIndexPlaying].song_id);
+
+                                      if (response == null) {
+                                        responseBar("There was en error, check your connection.", mainButtonColor, context);
+                                      }
+                                      else {
+                                        if (response.statusCode == 200) {
+                                          setState(() {
+                                            isLiked = false;
+                                          });
+                                        }
+                                        else if (response.statusCode == 403) {
+                                          responseBar(response.data["detail"], mainButtonColor, context);
+                                          //Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => SearchScreen()));
+                                        }
+                                        else if (response.statusCode >= 500) {
+                                          responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
+                                        }
+                                        else {
+                                          responseBar("There was en error, check your connection.", mainButtonColor, context);
+                                        }
+                                      }
+                                    }
+                                    else {
+                                      var response = await Like().likeSong(widget.queue[currentIndexPlaying].song_id);
+
+                                      if (response == null) {
+                                        responseBar("There was en error, check your connection.", mainButtonColor, context);
+                                      }
+                                      else {
+                                        if (response.statusCode == 201) {
+                                          setState(() {
+                                            isLiked = true;
+                                          });
+                                        }
+                                        else if (response.statusCode == 403) {
+                                          responseBar(response.data["detail"], mainButtonColor, context);
+                                          //Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => SearchScreen()));
+                                        }
+                                        else if (response.statusCode >= 500) {
+                                          responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
+                                        }
+                                        else {
+                                          responseBar("There was en error, check your connection.", mainButtonColor, context);
+                                        }
+                                      }
+                                    }
                                   },
                                   icon: isLiked ? Icon(CupertinoIcons.suit_heart_fill) : Icon(CupertinoIcons.suit_heart),
                                 ),

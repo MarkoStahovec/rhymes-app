@@ -74,27 +74,6 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(
                           width: buttonSize.width,
                           height: buttonSize.height,
-                          child: Listener(
-                            onPointerUp: (_) => setState(() => isPressed = false),
-                            onPointerDown: (_) => setState(() => isPressed = true),
-                            child:
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: animationTime),
-                              child: Align(
-                                alignment: Alignment(0, 0),
-                                child: IconButton(
-                                  color: neutralButtonColor,
-                                  onPressed: () async {
-                                    Navigator.pop(context);
-                                    setState(() {
-
-                                    });
-                                  },
-                                  icon: Icon(CupertinoIcons.arrow_left),
-                                ),
-                              ),
-                            ),
-                          ),
                         ),
                         SizedBox(
                           width: buttonSize.width,
@@ -365,12 +344,14 @@ class _LoginPageState extends State<LoginPage> {
                                 else {
                                   if (response.statusCode == 200) {
                                     // responseBar("Login successful", isDarkMode ? darkLeftBackgroundColor : lightLeftBackgroundColor);
-                                    await Navigator.push(
+                                    /*await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => HomePage(),
                                       ),
-                                    );
+                                    );*/
+                                    await Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) =>
+                                        HomePage()), (Route<dynamic> route) => false);
                                   }
                                   else if (response.statusCode == 403) {
                                     responseBar("Invalid credentials. Check your email and password.", mainButtonColor, context);

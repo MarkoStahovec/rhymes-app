@@ -25,10 +25,12 @@ class Like with ChangeNotifier {
     final token = prefs.getString('token') ?? '';
     dio.options.headers['authorization'] = "Bearer " + token;
 
+    var id = {
+      "song_id": song_id.toString()
+    };
+
     try {
-      response = await dio.post(urlKey + "likes/", queryParameters: {
-        "song_id": song_id
-      });
+      response = await dio.post(urlKey + "likes/", data: jsonEncode(id),);
       return response;
     }
     on DioError catch (e) {
@@ -47,7 +49,7 @@ class Like with ChangeNotifier {
     dio.options.headers['authorization'] = "Bearer " + token;
 
     try {
-      response = await dio.delete(urlKey + "likes/unlike", queryParameters: {
+      response = await dio.delete(urlKey + "likes/unlike/", queryParameters: {
         "song_id": song_id
       });
       return response;

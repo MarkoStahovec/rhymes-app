@@ -58,7 +58,7 @@ Gradient beatGradient = LinearGradient(colors: [
 
 Gradient altBeatGradient = LinearGradient(colors: [
   mainButtonColor,
-  altButtonColor,
+  secondaryButtonColor,
 ],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,);

@@ -4,8 +4,11 @@ import 'package:neumorphism/constants.dart';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart' as BS;
 import 'package:neumorphism/widgets/album.dart';
+import 'package:neumorphism/widgets/loadingScreen.dart';
 import 'package:neumorphism/widgets/responseBar.dart';
 import 'package:neumorphism/widgets/tinyAlbum.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'LoginPage.dart';
 import 'api/like.dart';
 import 'api/song.dart';
 import 'main.dart';
@@ -48,15 +51,19 @@ class _HomePageState extends State<HomePage> {
   int counter = 1;
   bool isPressed = false;
   bool isPlayPressed = false;
+  bool isCheckPressed = false;
+  bool isXPressed = false;
 
-  List<SongItem> favorites = [
+  bool _isLoading = false;
+
+  List<SongItem> favorites = [/*
     const SongItem(song_id: 1,counter: "01", name: "159feel.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 2,counter: "02", name: "77que.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 3,counter: "03", name: "146quake.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 4,counter: "04", name: "154chicago.mp3", author: "Marko Stahovec"),
-  ];
+  */];
 
-  List<SongItem> allSongs = [
+  List<SongItem> allSongs = [/*
     const SongItem(song_id: 8,counter: "01", name: "45smoke.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 9,counter: "02", name: "57dmatch.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 10,counter: "03", name: "62trav.mp3", author: "Marko Stahovec"),
@@ -87,7 +94,7 @@ class _HomePageState extends State<HomePage> {
     const SongItem(song_id: 35,counter: "04", name: "52stomp.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 36,counter: "04", name: "54code.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 37,counter: "04", name: "89glitch.mp3", author: "Marko Stahovec"),
-  ];
+  */];
 
   String formatCounter(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -96,11 +103,19 @@ class _HomePageState extends State<HomePage> {
     return seconds;
   }
 
+  String formatCount(String n) => n.toString().padLeft(2, '0');
+
   @override
   void initState() {
     super.initState();
+    setState(() {
+      _isLoading = true;
+    });
     loadAllSongs();
     loadFavorites();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   loadFavorites() async {
@@ -127,106 +142,156 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Offset offset = isPressed ? offsetPress : offsetNonPress;
-    double blur = blurButton;
-    final width = MediaQuery.of(context).size.width;
-    final squareSideLength = width / buttonSizeMultiplier;
-    final buttonSize = Size(squareSideLength, squareSideLength);
-
-    return Scaffold(
-      //backgroundColor: lightLeftBackgroundColor,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDarkMode ? [
-              darkLeftBackgroundColor,
-              darkRightBackgroundColor,
-            ]
-                : [
-              lightLeftBackgroundColor,
-              lightRightBackgroundColor,
-            ],
-            begin: Alignment.bottomLeft,
-            end: Alignment.topRight,
-          )
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(left: defaultPadding * 1.5,
-              right: 0,),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 0, right: defaultPadding * 1.5, top: defaultPadding * 2),
+  Future<bool> dialogConfirmation(
+      Offset offset,
+      Size buttonSize,
+      BuildContext context,
+      String content, {
+        String textNo = 'No',
+        String textYes = 'Yes',
+      }) async {
+    return await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState)
+        {
+          return AlertDialog(
+            backgroundColor: isDarkMode
+                ? darkRightBackgroundColor
+                : lightRightBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(25.0),
+            ),
+            alignment: Alignment.center,
+            content: Text(content, style: GoogleFonts.poppins(
+              fontSize: defTextSize,
+              fontWeight: FontWeight.w400,
+              color: isDarkMode ? darkMainTextColor : lightMainTextColor,
+            ), textAlign: TextAlign.center),
+            actionsOverflowButtonSpacing: 0.0,
+            actions: [
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 0, defaultPadding),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       SizedBox(
                         width: buttonSize.width,
                         height: buttonSize.height,
                         child: Listener(
-                          onPointerUp: (_) => setState(() => isPressed = false),
-                          onPointerDown: (_) => setState(() => isPressed = true),
+                          onPointerUp: (_) =>
+                              setState(() => isCheckPressed = false),
+                          onPointerDown: (_) =>
+                              setState(() => isCheckPressed = true),
                           child:
                           AnimatedContainer(
-                            duration: const Duration(milliseconds: animationTime),
+                            duration: const Duration(
+                                milliseconds: animationTime),
+                            decoration: BS.BoxDecoration(
+                                borderRadius: BorderRadius.circular(defRadius),
+                                gradient: LinearGradient(
+                                  colors: isDarkMode ? [
+                                    darkLeftBackgroundColor,
+                                    darkRightBackgroundColor,
+                                  ]
+                                      : [
+                                    lightLeftBackgroundColor,
+                                    lightRightBackgroundColor,
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                boxShadow: [
+                                  BS.BoxShadow(
+                                    color: isDarkMode
+                                        ? darkLeftShadow
+                                        : lightLeftShadow,
+                                    offset: -offset,
+                                    blurRadius: blurButton,
+                                    spreadRadius: 0.0,
+                                    inset: isCheckPressed,
+                                  ),
+                                  BS.BoxShadow(
+                                    color: isDarkMode
+                                        ? darkRightShadow
+                                        : lightRightShadow,
+                                    offset: offset,
+                                    blurRadius: blurButton,
+                                    spreadRadius: 0.0,
+                                    inset: isCheckPressed,
+                                  ),
+                                ]
+
+
+                            ),
                             child: Align(
                               alignment: Alignment(0, 0),
                               child: IconButton(
                                 color: neutralButtonColor,
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                icon: Icon(CupertinoIcons.arrow_left),
+                                onPressed: () => Navigator.pop(context, true),
+                                icon: Icon(CupertinoIcons.check_mark),
                               ),
                             ),
                           ),
                         ),
                       ),
-                      RichText(
-                        text: TextSpan(
-                          // Note: Styles for TextSpans must be explicitly defined.
-                          // Child text spans will inherit styles from parent
-                          style: const TextStyle(
-                            fontSize: defTextSize * 1.3,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(text: ' rhymes', style: TextStyle(color: isDarkMode ? darkMainTextColor : lightMainTextColor,)),
-                            const TextSpan(text: '.', style: TextStyle(color: mainButtonColor)),
-                          ],
-                        ),
-                      ),
-                      /*
-                      Text(
-                        "All tracks",
-                        style: GoogleFonts.poppins(
-                          fontSize: defTextSize * 1.3,
-                          fontWeight: FontWeight.w500,
-                          color: isDarkMode ? darkMainTextColor : lightMainTextColor,
-                        ),
-                      ),*/
                       SizedBox(
                         width: buttonSize.width,
                         height: buttonSize.height,
                         child: Listener(
-                          onPointerUp: (_) => setState(() => isPressed = false),
-                          onPointerDown: (_) => setState(() => isPressed = true),
+                          onPointerUp: (_) =>
+                              setState(() => isXPressed = false),
+                          onPointerDown: (_) =>
+                              setState(() => isXPressed = true),
                           child:
                           AnimatedContainer(
-                            duration: const Duration(milliseconds: animationTime),
+                            duration: const Duration(
+                                milliseconds: animationTime),
+                            decoration: BS.BoxDecoration(
+                                borderRadius: BorderRadius.circular(defRadius),
+                                gradient: LinearGradient(
+                                  colors: isDarkMode ? [
+                                    darkLeftBackgroundColor,
+                                    darkRightBackgroundColor,
+                                  ]
+                                      : [
+                                    lightLeftBackgroundColor,
+                                    lightRightBackgroundColor,
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                boxShadow: [
+                                  BS.BoxShadow(
+                                    color: isDarkMode
+                                        ? darkLeftShadow
+                                        : lightLeftShadow,
+                                    offset: -offset,
+                                    blurRadius: blurButton,
+                                    spreadRadius: 0.0,
+                                    inset: isXPressed,
+                                  ),
+                                  BS.BoxShadow(
+                                    color: isDarkMode
+                                        ? darkRightShadow
+                                        : lightRightShadow,
+                                    offset: offset,
+                                    blurRadius: blurButton,
+                                    spreadRadius: 0.0,
+                                    inset: isXPressed,
+                                  ),
+                                ]
+                            ),
                             child: Align(
                               alignment: Alignment(0, 0),
                               child: IconButton(
                                 color: neutralButtonColor,
-                                onPressed: () {
-                                  setState(() {
-                                    isDarkMode = !isDarkMode;
-                                  });
-                                },
-                                icon: isDarkMode ? const Icon(CupertinoIcons.sun_max) : const Icon(CupertinoIcons.moon),
+                                onPressed: () => Navigator.pop(context, false),
+                                icon: Icon(CupertinoIcons.xmark),
                               ),
                             ),
                           ),
@@ -235,151 +300,287 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: defaultPadding,),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: defaultPadding, right: 0, top: defaultPadding),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "Favorites",
-                          style: GoogleFonts.poppins(
-                            fontSize: defTextSize * 1.3,
-                            fontWeight: FontWeight.w500,
-                            color: isDarkMode ? darkMainTextColor : lightMainTextColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: defaultPadding * 2.5, top: defaultPadding),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          width: buttonSize.width / 1.25,
-                          height: buttonSize.height / 1.25,
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Offset offset = isPressed ? offsetPress : offsetNonPress;
+    double blur = blurButton;
+    final width = MediaQuery.of(context).size.width;
+    final squareSideLength = width / buttonSizeMultiplier;
+    final buttonSize = Size(squareSideLength, squareSideLength);
+
+    return WillPopScope(
+      onWillPop: () async {
+        bool? result= await dialogConfirmation(offset, buttonSize, context,
+            "Are you sure you want to log out?");
+        if(result == null){
+          result = false;
+        }
+        else if (result == true) {
+          await Navigator.pushAndRemoveUntil<void>(
+            context,
+            MaterialPageRoute<void>(builder: (BuildContext context) => LoginPage()),
+            ModalRoute.withName('/'),
+          );
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.clear();
+          responseBar("Log Out Successful", isDarkMode ? darkSnackbarColor : lightSnackbarColor, context);
+        }
+        return result;
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDarkMode ? [
+                  darkLeftBackgroundColor,
+                  darkRightBackgroundColor,
+                ]
+                    : [
+                  lightLeftBackgroundColor,
+                  lightRightBackgroundColor,
+                ],
+                begin: Alignment.bottomLeft,
+                end: Alignment.topRight,
+              )
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(left: defaultPadding * 1.5,
+                right: 0,),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 0, right: defaultPadding * 1.5, top: defaultPadding * 2),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(
+                          width: buttonSize.width,
+                          height: buttonSize.height,
                           child: Listener(
-                            onPointerUp: (_) => setState(() => isPlayPressed = false),
-                            onPointerDown: (_) => setState(() => isPlayPressed = true),
+                            onPointerUp: (_) => setState(() => isPressed = false),
+                            onPointerDown: (_) => setState(() => isPressed = true),
                             child:
                             AnimatedContainer(
-                              curve: Curves.easeOutExpo,
                               duration: const Duration(milliseconds: animationTime),
-                              decoration: BS.BoxDecoration(
-                                  borderRadius: BorderRadius.circular(defRadius),
-                                  gradient: LinearGradient(
-                                    colors: isDarkMode ? [
-                                      darkLeftBackgroundColor,
-                                      darkRightBackgroundColor,
-                                    ]
-                                        : [
-                                      lightLeftBackgroundColor,
-                                      lightRightBackgroundColor,
-                                    ],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  ),
-                                  //gradient: beatGradient,
-                                  //color: mainButtonColor,
-                                  boxShadow: [
-                                    BS.BoxShadow(
-                                      color: isDarkMode ? darkLeftShadow : lightLeftShadow,
-                                      offset: -offset,
-                                      blurRadius: blur,
-                                      spreadRadius: 0.0,
-                                      inset: isPlayPressed,
-                                    ),
-                                    BS.BoxShadow(
-                                      color: isDarkMode ? darkRightShadow : lightRightShadow,
-                                      offset: offset,
-                                      blurRadius: blur,
-                                      spreadRadius: 0.0,
-                                      inset: isPlayPressed,
-                                    ),
-                                  ]
-                              ),
                               child: Align(
                                 alignment: Alignment(0, 0),
                                 child: IconButton(
-                                  color: mainButtonColor,
-                                  onPressed: () async {
-                                    var response2 = await Song().getSongInfo(favorites[0].song_id);
+                                  color: neutralButtonColor,
+                                  onPressed: () {
+                                    Navigator.maybePop(context);
+                                  },
+                                  icon: Icon(CupertinoIcons.arrow_left),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        RichText(
+                          text: TextSpan(
+                            // Note: Styles for TextSpans must be explicitly defined.
+                            // Child text spans will inherit styles from parent
+                            style: const TextStyle(
+                              fontSize: defTextSize * 1.3,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            children: <TextSpan>[
+                              TextSpan(text: ' rhymes', style: TextStyle(color: isDarkMode ? darkMainTextColor : lightMainTextColor,)),
+                              const TextSpan(text: '.', style: TextStyle(color: mainButtonColor)),
+                            ],
+                          ),
+                        ),
+                        /*
+                      Text(
+                        "All tracks",
+                        style: GoogleFonts.poppins(
+                          fontSize: defTextSize * 1.3,
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode ? darkMainTextColor : lightMainTextColor,
+                        ),
+                      ),*/
+                        SizedBox(
+                          width: buttonSize.width,
+                          height: buttonSize.height,
+                          child: Listener(
+                            onPointerUp: (_) => setState(() => isPressed = false),
+                            onPointerDown: (_) => setState(() => isPressed = true),
+                            child:
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: animationTime),
+                              child: Align(
+                                alignment: Alignment(0, 0),
+                                child: IconButton(
+                                  color: neutralButtonColor,
+                                  onPressed: () {
+                                    setState(() {
+                                      isDarkMode = !isDarkMode;
+                                    });
+                                  },
+                                  icon: isDarkMode ? const Icon(CupertinoIcons.sun_max) : const Icon(CupertinoIcons.moon),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: defaultPadding,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: defaultPadding, right: 0, top: defaultPadding),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Favorites",
+                            style: GoogleFonts.poppins(
+                              fontSize: defTextSize * 1.3,
+                              fontWeight: FontWeight.w500,
+                              color: isDarkMode ? darkMainTextColor : lightMainTextColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: defaultPadding * 2.5, top: defaultPadding),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: SizedBox(
+                            width: buttonSize.width / 1.25,
+                            height: buttonSize.height / 1.25,
+                            child: Listener(
+                              onPointerUp: (_) => setState(() => isPlayPressed = false),
+                              onPointerDown: (_) => setState(() => isPlayPressed = true),
+                              child:
+                              AnimatedContainer(
+                                curve: Curves.easeOutExpo,
+                                duration: const Duration(milliseconds: animationTime),
+                                decoration: BS.BoxDecoration(
+                                    borderRadius: BorderRadius.circular(defRadius),
+                                    gradient: LinearGradient(
+                                      colors: isDarkMode ? [
+                                        darkLeftBackgroundColor,
+                                        darkRightBackgroundColor,
+                                      ]
+                                          : [
+                                        lightLeftBackgroundColor,
+                                        lightRightBackgroundColor,
+                                      ],
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                    ),
+                                    //gradient: beatGradient,
+                                    //color: mainButtonColor,
+                                    boxShadow: [
+                                      BS.BoxShadow(
+                                        color: isDarkMode ? darkLeftShadow : lightLeftShadow,
+                                        offset: -offset,
+                                        blurRadius: blur,
+                                        spreadRadius: 0.0,
+                                        inset: isPlayPressed,
+                                      ),
+                                      BS.BoxShadow(
+                                        color: isDarkMode ? darkRightShadow : lightRightShadow,
+                                        offset: offset,
+                                        blurRadius: blur,
+                                        spreadRadius: 0.0,
+                                        inset: isPlayPressed,
+                                      ),
+                                    ]
+                                ),
+                                child: Align(
+                                  alignment: Alignment(0, 0),
+                                  child: IconButton(
+                                    color: mainButtonColor,
+                                    onPressed: () async {
+                                      var response2 = await Song().getSongInfo(favorites[0].song_id);
 
-                                    if (response2 == null) {
-                                      responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
-                                    }
-                                    else {
-                                      if (response2.statusCode == 200) {
-                                        await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => PlayerPage(queue: favorites, trackname: favorites[0].name, song_id: favorites[0].song_id),
-                                          ),
-                                        );
-                                        setState(() {
-
-                                        });
-                                      }
-                                      else if (response2.statusCode == 403) {
-                                        responseBar(response2.data["detail"], mainButtonColor, context);
-                                        //Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => SearchScreen()));
-                                      }
-                                      else if (response2.statusCode >= 500) {
-                                        responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
-                                      }
-                                      else {
+                                      if (response2 == null) {
                                         responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
                                       }
-                                    }
-                                    setState(() {});
-                                  },
-                                  icon: const Icon(CupertinoIcons.play_arrow_solid),
+                                      else {
+                                        if (response2.statusCode == 200) {
+                                          await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => PlayerPage(queue: favorites, trackname: favorites[0].name, song_id: 2, favorites: favorites),
+                                            ),
+                                          );
+                                          setState(() {
 
+                                          });
+                                        }
+                                        else if (response2.statusCode == 403) {
+                                          responseBar(response2.data["detail"], mainButtonColor, context);
+                                          //Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => SearchScreen()));
+                                        }
+                                        else if (response2.statusCode >= 500) {
+                                          responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
+                                        }
+                                        else {
+                                          responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
+                                        }
+                                      }
+                                      setState(() {});
+                                    },
+                                    icon: const Icon(CupertinoIcons.play_arrow_solid),
+
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: defaultPadding / 2, right: 0, top: defaultPadding),
-                  child: Container(
-                    color: Colors.white.withOpacity(0),
-                    height: MediaQuery.of(context).size.height * 0.22,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: favorites.length,
-                      separatorBuilder: (context, _) => const SizedBox(height: defaultPadding, width: defaultPadding,),
-                      itemBuilder: (context, index) => buildCard(item: favorites[index]),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: defaultPadding / 2, right: 0, top: defaultPadding),
+                    child: Container(
+                      color: Colors.white.withOpacity(0),
+                      height: MediaQuery.of(context).size.height * 0.22,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: favorites.length,
+                        separatorBuilder: (context, _) => const SizedBox(height: defaultPadding, width: defaultPadding,),
+                        itemBuilder: (context, index) => buildCard(item: favorites[index]),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: defaultPadding * 1.5,),
-                Padding(
-                  padding: const EdgeInsets.only(left: defaultPadding / 2, right: 0, top: defaultPadding),
-                  child: Container(
-                    color: Colors.white.withOpacity(0),
-                    height: MediaQuery.of(context).size.height * 0.38,
-                    child: ListView.separated(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: allSongs.length,
-                      key: UniqueKey(),
-                      separatorBuilder: (context, _) => const SizedBox(height: 0, width: defaultPadding,),
-                      itemBuilder: (context, index) =>  buildRow(item: allSongs[index]),
+                  const SizedBox(height: defaultPadding * 1.5,),
+                  Padding(
+                    padding: const EdgeInsets.only(left: defaultPadding / 2, right: 0, top: defaultPadding),
+                    child: Container(
+                      color: Colors.white.withOpacity(0),
+                      height: MediaQuery.of(context).size.height * 0.38,
+                      child: ListView.separated(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: allSongs.length,
+                        key: UniqueKey(),
+                        separatorBuilder: (context, _) => const SizedBox(height: 0, width: defaultPadding,),
+                        itemBuilder: (context, index) =>  buildRow(item: allSongs[index]),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  linearLoadingScreen(_isLoading),
+                ],
+              ),
             ),
           ),
         ),
-      ),
+      )
     );
   }
 
@@ -431,7 +632,7 @@ class _HomePageState extends State<HomePage> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              item.counter,
+              formatCount(item.counter),
               style: GoogleFonts.poppins(
                 fontSize: defTextSize * 1.5,
                 fontWeight: FontWeight.w500,
@@ -599,7 +800,7 @@ class _HomePageState extends State<HomePage> {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PlayerPage(queue: allSongs, trackname: item.name, song_id: item.song_id),
+                              builder: (context) => PlayerPage(favorites: favorites, queue: allSongs, trackname: item.name, song_id: item.song_id),
                             ),
                           );
                           setState(() {
