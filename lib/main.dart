@@ -24,7 +24,6 @@ import 'widgets/neu_icon_button.dart';
 import 'widgets/neu_text.dart';
 import 'widgets/labels.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart';
 
 
 void main() => runApp(MyApp());
@@ -53,10 +52,14 @@ class MyApp extends StatelessWidget {
 bool isDarkMode = false;
 
 class PlayerPage extends StatefulWidget {
-  final Uint8List track;
+  final String trackname;
+  final int song_id;
+  final List queue;
 
   PlayerPage({
-    required this.track,
+    required this.trackname,
+    required this.song_id,
+    required this.queue,
   });
 
   @override
@@ -65,24 +68,40 @@ class PlayerPage extends StatefulWidget {
 
 class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
   final audioPlayer = AudioPlayer();
+  final AudioCache player = AudioCache();
+  int currentIndexPlaying = 0;
+  double maxSongLength = 500.0;
   bool isPlaying = false;
   bool isPressed = false;
+  bool isPreviousPressed = false;
   bool isPlayPressed = false;
   bool isLiked = false;
   bool isRepeating = false;
   bool isShuffling = false;
+  String currentTrack = "";
 
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
+  Duration maxDuration = Duration.zero;
   late AnimationController _controller;
 
 
   @override
   void initState() {
     super.initState();
+    currentTrack = widget.trackname;
+    currentIndexPlaying = widget.song_id - 1;
+    print(currentIndexPlaying);
 
     setAudio();
 
+    preparePlayer();
+
+    _controller = AnimationController(duration: const Duration(milliseconds: 700), vsync: this);
+    _controller.repeat(reverse: true);
+  }
+
+  preparePlayer() {
     audioPlayer.onPlayerStateChanged.listen((state) async {
       setState(() {
         isPlaying = state == PlayerState.PLAYING;
@@ -93,6 +112,7 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
       setState(() {
         duration = newDuration;
       });
+      maxDuration = newDuration;
     });
 
     audioPlayer.onAudioPositionChanged.listen((newPosition) async {
@@ -101,21 +121,53 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
       });
     });
 
-    _controller = AnimationController(duration: const Duration(milliseconds: 700), vsync: this);
-    _controller.repeat(reverse: true);
+    audioPlayer.onPlayerCompletion.listen((event) async {
+      await setNextTrack();
+    });
   }
 
-  Future<Uint8List> get _localFile async {
-    final directory = await getTemporaryDirectory();
-    final path = directory.path;
-    final file = File('$path/audio.mp3');
-    final contents = file.readAsBytesSync();
+  setNextTrack() async {
+    if(currentIndexPlaying < widget.queue.length-1){
+      currentIndexPlaying = currentIndexPlaying + 1;
 
-    return contents;
+      position = Duration.zero;
+      duration = Duration.zero;
+      currentTrack = widget.queue[currentIndexPlaying].name;
+      var url = await player.load(widget.queue[currentIndexPlaying].name);
+      await audioPlayer.setUrl(url.path, isLocal: true);
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        setState(() {
+        });
+      });
+      //setState(() {});
+      print("NEXT AUDIO! $currentIndexPlaying");
+    } else {
+      print("AUDIO COMPLETED PLAYING");
+    }
+  }
+
+  setPreviousTrack() async {
+    if(currentIndexPlaying > 1){
+      currentIndexPlaying = currentIndexPlaying - 1;
+
+      position = Duration.zero;
+      duration = Duration.zero;
+      currentTrack = widget.queue[currentIndexPlaying].name;
+      var url = await player.load(widget.queue[currentIndexPlaying].name);
+      await audioPlayer.setUrl(url.path, isLocal: true);
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        setState(() {
+        });
+      });
+      //setState(() {});
+      print("PREVIOUS AUDIO! $currentIndexPlaying");
+    } else {
+      print("AUDIO COMPLETED PLAYING");
+    }
   }
 
   Future setAudio() async {
-    audioPlayer.setReleaseMode(ReleaseMode.STOP);
+    audioPlayer.setReleaseMode(ReleaseMode.RELEASE);
 /*
     String url = 'https://www.dropbox.com/s/w8mxxudnwm11zoi/154chicago.wav?dl=0';
     audioPlayer.setUrl(url);*/
@@ -128,18 +180,20 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
     await audioPlayer.setUrl(Uri.file(file.path).path, isLocal: true);
     await player.load('/audio.mp3');
 */
-
+/*
     Directory tempDir = await getTemporaryDirectory();
     File tempFile = File('${tempDir.path}/audio.mp3');
     await tempFile.writeAsBytes(ByteData.view(widget.track.buffer).buffer.asUint8List(), flush: true);
     String mp3Uri = tempFile.uri.toString();
     audioPlayer.setUrl(mp3Uri, isLocal: true);
-
+*/
 /*
     var url = await player.load('103swt.mp3');
     audioPlayer.setUrl(url.path, isLocal: true);
-    url = await player.load('audio.mp3');
-*/
+    url = await player.load('audio.');*/
+
+    var url = await player.load(widget.trackname);
+    audioPlayer.setUrl(url.path, isLocal: true);
 
     /*
     Uint8List track = await _localFile;
@@ -180,8 +234,6 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
     final width = MediaQuery.of(context).size.width;
     final squareSideLength = width / buttonSizeMultiplier;
     final buttonSize = Size(squareSideLength, squareSideLength);
-
-    //final song = ModalRoute.of(context)!.settings.arguments as SongTrack;
 
     return Scaffold(
       //backgroundColor: bgColor,
@@ -248,8 +300,9 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                               child: IconButton(
                                 color: neutralButtonColor,
                                 onPressed: () {
-                                  setState(() {});
-                                  isDarkMode = !isDarkMode;
+                                  setState(() {
+                                    isDarkMode = !isDarkMode;
+                                  });
                                 },
                                 icon: isDarkMode ? const Icon(CupertinoIcons.sun_max) : const Icon(CupertinoIcons.moon),
                               ),
@@ -263,7 +316,7 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                 const SizedBox(height: defaultPadding * 2,),
                 Album(),
                 const SizedBox(height: defaultPadding * 2,),
-                Labels(),
+                Labels(trackname: currentTrack),
                 SliderTheme(
                   data: SliderThemeData(
                     thumbColor: mainButtonColor,
@@ -319,11 +372,60 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            NeuIconButton(
-                              icon: CupertinoIcons.backward_end_fill,
-                              iconColor: neutralButtonColor,
-                              secondaryIcon: CupertinoIcons.backward_end_fill,
-                              onPressed: () {  },),
+                            SizedBox(
+                              width: buttonSize.width,
+                              height: buttonSize.height,
+                              child: Listener(
+                                onPointerUp: (_) => setState(() => isPreviousPressed = false),
+                                onPointerDown: (_) => setState(() => isPreviousPressed = true),
+                                child:
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: animationTime),
+                                  decoration: BS.BoxDecoration(
+                                      borderRadius: BorderRadius.circular(defRadius),
+                                      gradient: LinearGradient(
+                                        colors: isDarkMode ? [
+                                          darkLeftBackgroundColor,
+                                          darkRightBackgroundColor,
+                                        ]
+                                            : [
+                                          lightLeftBackgroundColor,
+                                          lightRightBackgroundColor,
+                                        ],
+                                        begin: Alignment.centerLeft,
+                                        end: Alignment.centerRight,
+                                      ),
+                                      boxShadow: [
+                                        BS.BoxShadow(
+                                          color: isDarkMode ? darkLeftShadow : lightLeftShadow,
+                                          offset: -offset,
+                                          blurRadius: blur,
+                                          spreadRadius: 0.0,
+                                          inset: isPreviousPressed,
+                                        ),
+                                        BS.BoxShadow(
+                                          color: isDarkMode ? darkRightShadow : lightRightShadow,
+                                          offset: offset,
+                                          blurRadius: blur,
+                                          spreadRadius: 0.0,
+                                          inset: isPreviousPressed,
+                                        ),
+                                      ]
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment(0, 0),
+                                    child: IconButton(
+                                      color: neutralButtonColor,
+                                      onPressed: () async {
+                                        //audioPlayer.seek(maxDuration);
+                                        await setPreviousTrack();
+                                      },
+                                      icon: Icon(CupertinoIcons.backward_end_fill),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                             const SizedBox(width: defaultPadding * 2.5,),
                             SizedBox(
                               width: buttonSize.width,
@@ -388,11 +490,67 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                               ),
                             ),
                             const SizedBox(width: defaultPadding * 2.5,),
+                            SizedBox(
+                              width: buttonSize.width,
+                              height: buttonSize.height,
+                              child: Listener(
+                                onPointerUp: (_) => setState(() => isPressed = false),
+                                onPointerDown: (_) => setState(() => isPressed = true),
+                                child:
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: animationTime),
+                                  decoration: BS.BoxDecoration(
+                                      borderRadius: BorderRadius.circular(defRadius),
+                                      gradient: LinearGradient(
+                                        colors: isDarkMode ? [
+                                          darkLeftBackgroundColor,
+                                          darkRightBackgroundColor,
+                                        ]
+                                            : [
+                                          lightLeftBackgroundColor,
+                                          lightRightBackgroundColor,
+                                        ],
+                                        begin: Alignment.centerLeft,
+                                        end: Alignment.centerRight,
+                                      ),
+                                      boxShadow: [
+                                        BS.BoxShadow(
+                                          color: isDarkMode ? darkLeftShadow : lightLeftShadow,
+                                          offset: -offset,
+                                          blurRadius: blur,
+                                          spreadRadius: 0.0,
+                                          inset: isPressed,
+                                        ),
+                                        BS.BoxShadow(
+                                          color: isDarkMode ? darkRightShadow : lightRightShadow,
+                                          offset: offset,
+                                          blurRadius: blur,
+                                          spreadRadius: 0.0,
+                                          inset: isPressed,
+                                        ),
+                                      ]
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment(0, 0),
+                                    child: IconButton(
+                                      color: neutralButtonColor,
+                                      onPressed: () async {
+                                        //audioPlayer.seek(maxDuration);
+                                        await setNextTrack();
+                                      },
+                                      icon: Icon(CupertinoIcons.forward_end_fill),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),/*
                             NeuIconButton(
                               icon: CupertinoIcons.forward_end_fill,
                               iconColor: neutralButtonColor,
                               secondaryIcon: CupertinoIcons.forward_end_fill,
-                              onPressed: () {  },),
+                              onPressed: () async {
+                                audioPlayer.state = PlayerState.COMPLETED;
+                              },),*/
                           ],
                         ),
                       ),
@@ -414,11 +572,11 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                           AnimatedContainer(
                             duration: const Duration(milliseconds: animationTime),
                             child: Align(
-                              alignment: Alignment(0, 0),
+                              alignment: const Alignment(0, 0),
                               child: IconButton(
                                 color: neutralButtonColor,
                                 onPressed: () {
-
+                                  Navigator.pop(context);
                                 },
                                 icon: Icon(CupertinoIcons.square_list),
                               ),
@@ -442,6 +600,9 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                                 onPressed: () {
                                   setState(() {
                                     isShuffling = !isShuffling;
+                                    if (isShuffling == true) {
+                                      widget.queue.shuffle();
+                                    }
                                   });
                                 },
                                 icon: Icon(CupertinoIcons.shuffle),
@@ -466,6 +627,12 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                                 onPressed: () {
                                   setState(() {
                                     isRepeating = !isRepeating;
+                                    if(isRepeating == true) {
+                                      audioPlayer.setReleaseMode(ReleaseMode.LOOP);
+                                    }
+                                    else {
+                                      audioPlayer.setReleaseMode(ReleaseMode.RELEASE);
+                                    }
                                   });
                                 },
                                 icon: Icon(CupertinoIcons.repeat),

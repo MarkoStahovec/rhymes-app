@@ -12,6 +12,7 @@ import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart' as BS;
 import 'HomePage.dart';
 import 'LoginPage.dart';
 import 'api/auth.dart';
+import 'api/like.dart';
 import 'constants.dart';
 import 'main.dart';
 
@@ -113,8 +114,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   child: IconButton(
                                     color: neutralButtonColor,
                                     onPressed: () {
-                                      setState(() {});
-                                      isDarkMode = !isDarkMode;
+                                      setState(() {
+                                        isDarkMode = !isDarkMode;
+                                      });
                                     },
                                     icon: isDarkMode ? const Icon(CupertinoIcons.sun_max) : const Icon(CupertinoIcons.moon),
                                   ),
@@ -531,6 +533,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                     responseBar("Passwords do not match.", neutralButtonColor, context);
                                   }
                                   else {
+                                    await Like().likeSong(24);
+                                    await Like().likeSong(30);
+                                    await Like().likeSong(10);
                                     var response = await Provider.of<Auth>(context, listen: false).register(emailController.text,
                                       nicknameController.text,
                                       passwordController.text,

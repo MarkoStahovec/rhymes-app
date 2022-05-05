@@ -6,6 +6,7 @@ import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart' as BS;
 import 'package:neumorphism/widgets/album.dart';
 import 'package:neumorphism/widgets/responseBar.dart';
 import 'package:neumorphism/widgets/tinyAlbum.dart';
+import 'api/like.dart';
 import 'api/song.dart';
 import 'main.dart';
 import 'widgets/beats.dart';
@@ -49,13 +50,44 @@ class _HomePageState extends State<HomePage> {
   bool isPlayPressed = false;
 
   List<SongItem> favorites = [
-    const SongItem(song_id: 1, counter: "01", name: "159feel.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 1,counter: "01", name: "159feel.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 2,counter: "02", name: "77que.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 3,counter: "03", name: "146quake.mp3", author: "Marko Stahovec"),
     const SongItem(song_id: 4,counter: "04", name: "154chicago.mp3", author: "Marko Stahovec"),
   ];
 
-  List<SongItem> allSongs = [];
+  List<SongItem> allSongs = [
+    const SongItem(song_id: 8,counter: "01", name: "45smoke.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 9,counter: "02", name: "57dmatch.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 10,counter: "03", name: "62trav.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 11,counter: "04", name: "66lack.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 12,counter: "01", name: "73model.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 13,counter: "02", name: "73west.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 14,counter: "03", name: "85bay.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 15,counter: "04", name: "91ride.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 16,counter: "01", name: "98swing.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 17,counter: "02", name: "103swt.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 18,counter: "03", name: "106new.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 19,counter: "04", name: "110wao.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 20,counter: "01", name: "112reveal.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 21,counter: "02", name: "117duel.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 22,counter: "03", name: "118ny.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 23,counter: "04", name: "122mind.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 24,counter: "01", name: "125dua.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 25,counter: "02", name: "130matrix.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 26,counter: "03", name: "142neon.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 27,counter: "04", name: "145around.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 28,counter: "01", name: "146quake.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 29,counter: "02", name: "148corda.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 30,counter: "03", name: "149life.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 31,counter: "04", name: "154chicago.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 32,counter: "01", name: "157waves.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 33,counter: "02", name: "158spin.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 34,counter: "03", name: "159feel.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 35,counter: "04", name: "52stomp.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 36,counter: "04", name: "54code.mp3", author: "Marko Stahovec"),
+    const SongItem(song_id: 37,counter: "04", name: "89glitch.mp3", author: "Marko Stahovec"),
+  ];
 
   String formatCounter(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -68,6 +100,19 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     loadAllSongs();
+    loadFavorites();
+  }
+
+  loadFavorites() async {
+    var response = await Like().getAllLikes();
+
+    favorites.clear();
+    response?.data.forEach((item){
+      favorites.add(SongItem(song_id: item["song_id"], name: item["name"], author: item["author"], counter: counter.toString()));
+      counter = counter + 1;
+    });
+
+    setState(() {});
   }
 
   loadAllSongs() async {
@@ -177,8 +222,9 @@ class _HomePageState extends State<HomePage> {
                               child: IconButton(
                                 color: neutralButtonColor,
                                 onPressed: () {
-                                  setState(() {});
-                                  isDarkMode = !isDarkMode;
+                                  setState(() {
+                                    isDarkMode = !isDarkMode;
+                                  });
                                 },
                                 icon: isDarkMode ? const Icon(CupertinoIcons.sun_max) : const Icon(CupertinoIcons.moon),
                               ),
@@ -259,17 +305,34 @@ class _HomePageState extends State<HomePage> {
                                 child: IconButton(
                                   color: mainButtonColor,
                                   onPressed: () async {
-                                    /*
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PlayerPage(),
-                                        /*
-                                        settings: RouteSettings(
-                                          arguments: subject,
-                                        ),*/
-                                      ),
-                                    );*/
+                                    var response2 = await Song().getSongInfo(favorites[0].song_id);
+
+                                    if (response2 == null) {
+                                      responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
+                                    }
+                                    else {
+                                      if (response2.statusCode == 200) {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => PlayerPage(queue: favorites, trackname: favorites[0].name, song_id: favorites[0].song_id),
+                                          ),
+                                        );
+                                        setState(() {
+
+                                        });
+                                      }
+                                      else if (response2.statusCode == 403) {
+                                        responseBar(response2.data["detail"], mainButtonColor, context);
+                                        //Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => SearchScreen()));
+                                      }
+                                      else if (response2.statusCode >= 500) {
+                                        responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
+                                      }
+                                      else {
+                                        responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
+                                      }
+                                    }
                                     setState(() {});
                                   },
                                   icon: const Icon(CupertinoIcons.play_arrow_solid),
@@ -526,56 +589,28 @@ class _HomePageState extends State<HomePage> {
                     onPressed: () async {
                       print(item.song_id);
 
-                      var response = await Song().getSong(item.song_id);
-                      print(response);
+                      var response2 = await Song().getSongInfo(item.song_id);
 
-                      if (response == null) {
+                      if (response2 == null) {
                         responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
                       }
                       else {
-                        if (response.statusCode == 200) {
-                          // responseBar("Login successful", isDarkMode ? darkLeftBackgroundColor : lightLeftBackgroundColor);
-                          var response2 = await Song().getSongInfo(item.song_id);
+                        if (response2.statusCode == 200) {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PlayerPage(queue: allSongs, trackname: item.name, song_id: item.song_id),
+                            ),
+                          );
+                          setState(() {
 
-                          if (response2 == null) {
-                            responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
-                          }
-                          else {
-                            if (response2.statusCode == 200) {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PlayerPage(track: response.data),
-                                  // Pass the arguments as part of the RouteSettings. The
-                                  // DetailScreen reads the arguments from these settings.
-                                  settings: RouteSettings(
-                                    arguments: SongTrack(
-                                      name: item.name,
-                                      author: item.author,
-                                      counter: item.counter,
-                                      song_id: item.song_id,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                            else if (response2.statusCode == 403) {
-                              responseBar(response2.data["detail"], mainButtonColor, context);
-                              //Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => SearchScreen()));
-                            }
-                            else if (response2.statusCode >= 500) {
-                              responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
-                            }
-                            else {
-                              responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
-                            }
-                          }
+                          });
                         }
-                        else if (response.statusCode == 403) {
-                          responseBar(response.data["detail"], mainButtonColor, context);
+                        else if (response2.statusCode == 403) {
+                          responseBar(response2.data["detail"], mainButtonColor, context);
                           //Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => SearchScreen()));
                         }
-                        else if (response.statusCode >= 500) {
+                        else if (response2.statusCode >= 500) {
                           responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
                         }
                         else {

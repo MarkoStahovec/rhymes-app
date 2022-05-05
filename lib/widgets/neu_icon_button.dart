@@ -98,6 +98,7 @@ class _NeuIconButtonState extends State<NeuIconButton> {
             child: IconButton(
               color: widget.iconColor,
               onPressed: () {
+                widget.onPressed;
               },
               icon: isDarkMode ? Icon(widget.icon) : Icon(widget.secondaryIcon),
             ),

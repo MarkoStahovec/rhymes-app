@@ -5,6 +5,11 @@ import '../constants.dart';
 import '../main.dart';
 
 class Labels extends StatefulWidget {
+  final String trackname;
+
+  Labels({
+    required this.trackname,
+  });
   @override
   _LabelsState createState() => _LabelsState();
 }
@@ -17,7 +22,7 @@ class _LabelsState extends State<Labels> {
       child: Column(
         children: [
           Text(
-            "Dual Feel",
+            widget.trackname,
             style: GoogleFonts.poppins(
               fontSize: defTextSize * 1.3,
               fontWeight: FontWeight.w400,

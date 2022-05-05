@@ -110,8 +110,9 @@ class _LoginPageState extends State<LoginPage> {
                                 child: IconButton(
                                   color: neutralButtonColor,
                                   onPressed: () {
-                                    setState(() {});
-                                    isDarkMode = !isDarkMode;
+                                    setState(() {
+                                      isDarkMode = !isDarkMode;
+                                    });
                                   },
                                   icon: isDarkMode ? const Icon(CupertinoIcons.sun_max) : const Icon(CupertinoIcons.moon),
                                 ),
