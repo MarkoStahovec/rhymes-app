@@ -129,7 +129,10 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
   }
 
   setNextTrack() async {
-    if(currentIndexPlaying < widget.queue.length-1){
+    if(widget.queue.length == 1) {
+
+    }
+    else if(currentIndexPlaying < widget.queue.length-1){
       currentIndexPlaying = currentIndexPlaying + 1;
 
       position = Duration.zero;
@@ -160,6 +163,9 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
   }
 
   setPreviousTrack() async {
+    if(widget.queue.length == 1) {
+
+    }
     if(currentIndexPlaying > 0){
       currentIndexPlaying = currentIndexPlaying - 1;
 

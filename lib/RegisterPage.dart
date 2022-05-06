@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
 import 'package:flutter/services.dart';
 import 'package:flutter_inset_box_shadow/flutter_inset_box_shadow.dart' as BS;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'HomePage.dart';
 import 'LoginPage.dart';
@@ -533,9 +534,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                     responseBar("Passwords do not match.", neutralButtonColor, context);
                                   }
                                   else {
-                                    await Like().likeSong(24);
-                                    await Like().likeSong(30);
-                                    await Like().likeSong(10);
                                     var response = await Provider.of<Auth>(context, listen: false).register(emailController.text,
                                       nicknameController.text,
                                       passwordController.text,
@@ -549,6 +547,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                     else {
                                       if (response.statusCode == 201) {
                                         responseBar("Registration successful", neutralButtonColor, context);
+                                        await Provider.of<Auth>(context, listen: false).login(nicknameController.text, passwordController.text);
+                                        var resp = await Like().likeSong(24);
+                                        resp = await Like().likeSong(30);
+                                        resp = await Like().likeSong(10);
+                                        SharedPreferences prefs = await SharedPreferences.getInstance();
+                                        await prefs.clear();
                                         Navigator.of(context).pop();
                                       }
                                       else if (response.statusCode == 403) {
