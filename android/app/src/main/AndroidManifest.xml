@@ -2,7 +2,7 @@
     package="com.example.neumorphism">
     <uses-permission android:name="android.permission.INTERNET"/>
    <application
-        android:label="neumorphism"
+        android:label="rhymes."
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

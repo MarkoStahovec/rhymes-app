@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
         create: (ctx) => Auth(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: HomePage(),
+        home: LoginPage(),
         theme: ThemeData(
           textTheme: GoogleFonts.poppinsTextTheme(
             Theme.of(context).textTheme,
@@ -732,6 +732,7 @@ class _PlayerPageState extends State<PlayerPage> with TickerProviderStateMixin {
                                       else {
                                         if (response.statusCode == 200) {
                                           setState(() {
+                                            widget.queue.removeAt(currentIndexPlaying);
                                             isLiked = false;
                                           });
                                         }

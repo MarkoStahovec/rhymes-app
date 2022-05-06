@@ -146,6 +146,7 @@ class _HomePageState extends State<HomePage> {
       Offset offset,
       Size buttonSize,
       BuildContext context,
+      String questionMark,
       String content, {
         String textNo = 'No',
         String textYes = 'Yes',
@@ -165,11 +166,21 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(25.0),
             ),
             alignment: Alignment.center,
-            content: Text(content, style: GoogleFonts.poppins(
-              fontSize: defTextSize,
-              fontWeight: FontWeight.w400,
-              color: isDarkMode ? darkMainTextColor : lightMainTextColor,
-            ), textAlign: TextAlign.center),
+            content: RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                // Note: Styles for TextSpans must be explicitly defined.
+                // Child text spans will inherit styles from parent
+                style: const TextStyle(
+                  fontSize: defTextSize,
+                  fontWeight: FontWeight.w400,
+                ),
+                children: <TextSpan>[
+                  TextSpan(text: content, style: TextStyle(color: isDarkMode ? darkMainTextColor : lightMainTextColor,)),
+                  TextSpan(text: questionMark, style: TextStyle(color: mainButtonColor)),
+                ],
+              ),
+            ),
             actionsOverflowButtonSpacing: 0.0,
             actions: [
               Align(
@@ -318,8 +329,8 @@ class _HomePageState extends State<HomePage> {
 
     return WillPopScope(
       onWillPop: () async {
-        bool? result= await dialogConfirmation(offset, buttonSize, context,
-            "Are you sure you want to log out?");
+        bool? result= await dialogConfirmation(offset, buttonSize, context, "?",
+            "Are you sure you want to log out");
         if(result == null){
           result = false;
         }
@@ -507,7 +518,7 @@ class _HomePageState extends State<HomePage> {
                                       var response2 = await Song().getSongInfo(favorites[0].song_id);
 
                                       if (response2 == null) {
-                                        responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
+                                        responseBar("There was en error, check your connection.", mainButtonColor, context);
                                       }
                                       else {
                                         if (response2.statusCode == 200) {
@@ -529,7 +540,7 @@ class _HomePageState extends State<HomePage> {
                                           responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
                                         }
                                         else {
-                                          responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
+                                          responseBar("There was en error, check your connection.", mainButtonColor, context);
                                         }
                                       }
                                       setState(() {});
@@ -793,7 +804,7 @@ class _HomePageState extends State<HomePage> {
                       var response2 = await Song().getSongInfo(item.song_id);
 
                       if (response2 == null) {
-                        responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
+                        responseBar("There was en error, check your connection.", mainButtonColor, context);
                       }
                       else {
                         if (response2.statusCode == 200) {
@@ -815,7 +826,7 @@ class _HomePageState extends State<HomePage> {
                           responseBar("There is an error on server side, sit tight...", mainButtonColor, context);
                         }
                         else {
-                          responseBar("There was en error logging in. Check your connection.", mainButtonColor, context);
+                          responseBar("There was en error, check your connection.", mainButtonColor, context);
                         }
                       }
                     },

@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:neumorphism/widgets/album.dart';
 import 'package:neumorphism/widgets/responseBar.dart';
@@ -14,6 +15,7 @@ import 'RegisterPage.dart';
 import 'api/auth.dart';
 import 'constants.dart';
 import 'main.dart';
+import 'dart:io' show Platform, exit;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -74,6 +76,28 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(
                           width: buttonSize.width,
                           height: buttonSize.height,
+                          child: Listener(
+                            onPointerUp: (_) => setState(() => isPressed = false),
+                            onPointerDown: (_) => setState(() => isPressed = true),
+                            child:
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: animationTime),
+                              child: Align(
+                                alignment: Alignment(0, 0),
+                                child: IconButton(
+                                  color: neutralButtonColor,
+                                  onPressed: () {
+                                    if (Platform.isAndroid) {
+                                      SystemNavigator.pop();
+                                    } else if (Platform.isIOS) {
+                                      exit(0);
+                                    }
+                                  },
+                                  icon: Icon(CupertinoIcons.arrow_left),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                         SizedBox(
                           width: buttonSize.width,
