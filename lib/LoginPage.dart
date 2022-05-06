@@ -133,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                     text: TextSpan(
                       // Note: Styles for TextSpans must be explicitly defined.
                       // Child text spans will inherit styles from parent
-                      style: const TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: defTextSize * 1.3,
                         fontWeight: FontWeight.w500,
                       ),
@@ -403,7 +403,7 @@ class _LoginPageState extends State<LoginPage> {
 
                   RichText(
                     text: TextSpan(
-                      style: const TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: defTextSize * 0.75,
                         fontWeight: FontWeight.w400,
                       ),

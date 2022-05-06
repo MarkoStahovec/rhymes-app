@@ -171,7 +171,7 @@ class _HomePageState extends State<HomePage> {
               text: TextSpan(
                 // Note: Styles for TextSpans must be explicitly defined.
                 // Child text spans will inherit styles from parent
-                style: const TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: defTextSize,
                   fontWeight: FontWeight.w400,
                 ),
@@ -399,7 +399,7 @@ class _HomePageState extends State<HomePage> {
                           text: TextSpan(
                             // Note: Styles for TextSpans must be explicitly defined.
                             // Child text spans will inherit styles from parent
-                            style: const TextStyle(
+                            style: GoogleFonts.poppins(
                               fontSize: defTextSize * 1.3,
                               fontWeight: FontWeight.w500,
                             ),

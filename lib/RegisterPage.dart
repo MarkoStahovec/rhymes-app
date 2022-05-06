@@ -580,7 +580,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     RichText(
                       text: TextSpan(
-                        style: const TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: defTextSize * 0.75,
                           fontWeight: FontWeight.w400,
                         ),
